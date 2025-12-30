@@ -1,0 +1,32 @@
+.app {
+  height: 100vh;
+  background: #0f1117;
+  color: #e5e7eb;
+}
+
+.topbar {
+  padding: 16px 24px;
+  border-bottom: 1px solid #1f2937;
+}
+
+.subtitle {
+  font-size: 0.85rem;
+  opacity: 0.6;
+}
+
+.main-grid {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  height: calc(100vh - 72px);
+}
+
+.left-panel {
+  border-right: 1px solid #1f2937;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.right-panel {
+  padding: 24px;
+  overflow-y: auto;
+}
