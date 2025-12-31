@@ -42,9 +42,31 @@ const styles = `
 }
 
 .result-section h4 {
-  margin-top: 1rem;
+  margin-top: 1.2rem;
   margin-bottom: 0.5rem;
 }
+
+/* Intel table */
+.intel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.intel-table th,
+.intel-table td {
+  padding: 8px;
+  border-bottom: 1px solid #333;
+}
+
+.intel-table th {
+  text-align: left;
+  opacity: 0.7;
+}
+
+.intel-verdict.malicious { color: #f87171; }
+.intel-verdict.suspicious { color: #fbbf24; }
+.intel-verdict.clean { color: #4ade80; }
 `;
 
 export default function Submit({ onResult, updateStats }) {
@@ -64,29 +86,25 @@ export default function Submit({ onResult, updateStats }) {
 
       const normalized = {
         ...res.data,
-        time: new Date().toLocaleTimeString(), // 🔥 required for history table
+        time: new Date().toLocaleTimeString(),
       };
 
       setResult(normalized);
       setError(null);
 
-      /* Active Investigation */
-      if (onResult) {
-        onResult(normalized);
-      }
+      // Active Investigation
+      onResult?.(normalized);
 
-      /* KPI Counters */
-      if (updateStats) {
-        updateStats(prev => {
-          const next = { ...prev, total: prev.total + 1 };
+      // KPI Counters
+      updateStats?.(prev => {
+        const next = { ...prev, total: prev.total + 1 };
 
-          if (normalized.severity === "malicious") next.malicious += 1;
-          else if (normalized.severity === "suspicious") next.suspicious += 1;
-          else next.clean += 1;
+        if (normalized.severity === "malicious") next.malicious += 1;
+        else if (normalized.severity === "suspicious") next.suspicious += 1;
+        else next.clean += 1;
 
-          return next;
-        });
-      }
+        return next;
+      });
 
     } catch (err) {
       console.error(err);
@@ -129,7 +147,6 @@ export default function Submit({ onResult, updateStats }) {
             <div className={`severity-badge ${result.severity.toLowerCase()}`}>
               {result.severity.toUpperCase()}
             </div>
-
             <div className="confidence">
               Confidence: {result.confidence}%
             </div>
@@ -141,6 +158,7 @@ export default function Submit({ onResult, updateStats }) {
             <p><strong>Time:</strong> {result.time}</p>
           </div>
 
+          {/* MITRE */}
           {Array.isArray(result.mitre_attack) && result.mitre_attack.length > 0 && (
             <div className="result-section">
               <h4>MITRE ATT&CK</h4>
@@ -151,6 +169,36 @@ export default function Submit({ onResult, updateStats }) {
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {/* 🔥 Threat Intelligence Sources */}
+          {Array.isArray(result.enrichment) && result.enrichment.length > 0 && (
+            <div className="result-section">
+              <h4>Threat Intelligence Sources</h4>
+
+              <table className="intel-table">
+                <thead>
+                  <tr>
+                    <th>Source</th>
+                    <th>Verdict</th>
+                    <th>Confidence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.enrichment
+                    .filter(e => e && e.source)
+                    .map((e, i) => (
+                      <tr key={i}>
+                        <td>{e.source}</td>
+                        <td className={`intel-verdict ${e.reputation}`}>
+                          {e.reputation?.toUpperCase() || "UNKNOWN"}
+                        </td>
+                        <td>{e.confidence ?? "-"}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

@@ -1,13 +1,26 @@
-from app.analyzers import virustotal, abuseipdb
+from app.analyzers import virustotal, abuseipdb, otx
+
 
 def enrich(observable_type: str, value: str):
+    """
+    Enrich an observable using multiple threat intelligence sources.
+    Returns a list of normalized enrichment results.
+    """
     results = []
 
-    # VirusTotal (all types)
-    results.append(virustotal.analyze(observable_type, value))
+    # VirusTotal (IPs, domains, hashes)
+    vt_result = virustotal.analyze(observable_type, value)
+    if vt_result:
+        results.append(vt_result)
 
-    # AbuseIPDB only for IPs
+    # IP-only enrichments
     if observable_type == "ip":
-        results.append(abuseipdb.analyze(value))
+        abuse_result = abuseipdb.analyze(value)
+        if abuse_result:
+            results.append(abuse_result)
+
+        otx_result = otx.analyze(value)
+        if otx_result:
+            results.append(otx_result)
 
     return results
